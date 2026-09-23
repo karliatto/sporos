@@ -1,5 +1,5 @@
 [package]
-name = "sporo-core"
+name = "sporos-core"
 version = "0.1.0"
 edition = "2021"
 description = "What a phrase means: wordlist, BIP-39 arithmetic, flip packing — no chip dependencies"

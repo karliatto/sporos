@@ -5,7 +5,7 @@ use crate::{
     best_fit_font, usable_width, ACCENT_COLOR, BACKGROUND_COLOR, BODY_FONTS, LOGO_FONTS, TEXT_COLOR,
 };
 
-const LOGO_TEXT: &str = "SPORO";
+const LOGO_TEXT: &str = "SPOROS";
 const INSTRUCTION_TEXT: &str = "press any key";
 
 /// The idle screen: brand mark just above centre, instruction pinned to the

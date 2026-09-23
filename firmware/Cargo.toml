@@ -6,18 +6,18 @@
 resolver = "2"
 
 [package]
-name = "sporo"
+name = "sporos"
 version = "0.0.1-beta.1"
 edition = "2021"
 
 [dependencies]
 # What each key does and which screen comes next. The firmware reaches the
 # BIP-39 arithmetic only through this, so it cannot bypass a rule the app tests.
-sporo-app = { path = "../crates/app" }
+sporos-app = { path = "../crates/app" }
 
 # The screens. Also chip-independent — it draws into any `DrawTarget`, which is
 # how its layout is tested on the host rather than on the panel.
-sporo-ui = { path = "../crates/ui" }
+sporos-ui = { path = "../crates/ui" }
 
 # Bare-metal HAL. The `unstable` feature is needed for `esp_hal::delay::Delay`,
 # which both `mipidsi` and `embedded-hal-bus` require as a `DelayNs` source.
@@ -36,7 +36,7 @@ esp-backtrace = { version = "0.19.0", features = [
 
 # Display stack: ST7789 driver over SPI. embedded-graphics is needed here only
 # to clear the panel on power-up and to report its size; everything drawn on top
-# of it lives in sporo-ui.
+# of it lives in sporos-ui.
 mipidsi = "0.10.0"
 embedded-graphics = "0.8.2"
 embedded-hal-bus = "0.3.0"

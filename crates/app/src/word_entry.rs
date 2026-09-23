@@ -21,7 +21,7 @@
 
 use heapless::Vec;
 
-use sporo_core::{
+use sporos_core::{
     bip39::{SeedLength, Word, MAX_WORD_COUNT_TOTAL},
     bip39_wordlist::{self, LetterSet, ALPHABET},
 };
@@ -162,7 +162,7 @@ impl WordEntry {
                 // the list has no index to pack. A unique prefix is enough and
                 // is completed here, so the accepted word is always the whole
                 // one even when only four letters were typed.
-                let Some(word) = sporo_core::bip39::resolve(&self.current) else {
+                let Some(word) = sporos_core::bip39::resolve(&self.current) else {
                     self.rejected = true;
 
                     return true;

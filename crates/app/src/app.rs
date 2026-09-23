@@ -146,7 +146,7 @@ impl App {
 mod tests {
     use super::*;
 
-    use sporo_core::{
+    use sporos_core::{
         bip39::{self, Mnemonic, SeedLength, Word, MAX_WORD_COUNT},
         flips::Flips,
     };
@@ -753,7 +753,7 @@ mod tests {
 
     /// A phrase XORed with itself clears every entered word to `abandon`, which
     /// makes the result readable without repeating the arithmetic here — the
-    /// bit-level cases live in `sporo_core`.
+    /// bit-level cases live in `sporos_core`.
     #[test]
     fn the_xor_result_is_the_two_phrases_combined() {
         for length in SeedLength::ALL {

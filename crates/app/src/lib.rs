@@ -1,6 +1,6 @@
 //! What each key does, and which screen comes next.
 //!
-//! Sits between [`sporo_core`], which knows what a phrase *means*, and the
+//! Sits between [`sporos_core`], which knows what a phrase *means*, and the
 //! screens, which know what it *looks like*. Everything here is interaction:
 //! where a cursor is, what a keypress changes, when a workflow moves on. Nothing
 //! here draws or touches a pin, so a whole workflow can be walked through on the

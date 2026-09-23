@@ -7,7 +7,7 @@
 //! panel naming a key that did nothing.
 
 use heapless::String;
-use sporo_app::action::Action;
+use sporos_app::action::Action;
 
 use crate::keymap;
 

@@ -1,6 +1,6 @@
 //! What the panel should be showing, as the application sees it.
 
-use sporo_core::{
+use sporos_core::{
     bip39::{Mnemonic, SeedLength},
     flips::Flips,
 };

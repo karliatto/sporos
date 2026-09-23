@@ -10,8 +10,8 @@ use u8g2_fonts::{
     FontRenderer,
 };
 
-use sporo_app::action::Action;
-use sporo_core::flips::{Flip, Flips};
+use sporos_app::action::Action;
+use sporos_core::flips::{Flip, Flips};
 
 use crate::{
     best_fit_font,
@@ -208,7 +208,7 @@ mod tests {
     use super::*;
 
     use embedded_graphics::primitives::Rectangle;
-    use sporo_core::flips::MAX_FLIP_COUNT;
+    use sporos_core::flips::MAX_FLIP_COUNT;
 
     /// The panel this row is laid out for.
     const PANEL: Size = Size::new(240, 135);

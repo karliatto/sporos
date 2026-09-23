@@ -1,4 +1,4 @@
-use sporo_core::{
+use sporos_core::{
     bip39::{self, Mnemonic, SeedLength},
     flips::{Flip, Flips},
 };
