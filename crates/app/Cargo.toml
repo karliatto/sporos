@@ -1,5 +1,5 @@
 [package]
-name = "sporo-app"
+name = "sporos-app"
 version = "0.1.0"
 edition = "2021"
 description = "What each key does and which screen comes next — no chip dependencies"
@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 # What a phrase means: the wordlist, the BIP-39 arithmetic, and flip packing.
 # The app decides when to call it; it never re-derives any of it.
-sporo-core = { path = "../core" }
+sporos-core = { path = "../core" }
 
 # Fixed-capacity Vec, so accepted words are held without a heap allocator.
 heapless = "0.9.3"

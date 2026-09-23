@@ -4,13 +4,13 @@ use core::convert::Infallible;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 
-use sporo_app::{action::Action, menu::MenuItem, view::View, word_entry::WordEntry};
-use sporo_core::{
+use sporos_app::{action::Action, menu::MenuItem, view::View, word_entry::WordEntry};
+use sporos_core::{
     bip39::{self, Mnemonic, SeedLength, Word},
     bip39_wordlist::{self, ALPHABET},
     flips::{Flip, Flips},
 };
-use sporo_ui::{render, BACKGROUND_COLOR};
+use sporos_ui::{render, BACKGROUND_COLOR};
 
 /// The panel the firmware drives: 135x240 rotated 90 degrees.
 const PANEL: Size = Size::new(240, 135);
@@ -241,7 +241,7 @@ fn the_wordlist_screen_fits_the_panel() {
     for length in SeedLength::ALL {
         let mnemonic = longest_phrase(length);
 
-        for page in 0..sporo_app::view::phrase_pages(&mnemonic) {
+        for page in 0..sporos_app::view::phrase_pages(&mnemonic) {
             let mut display = Recorder::new(PANEL);
             render(
                 &mut display,

@@ -6,8 +6,8 @@ use embedded_graphics::{
 use heapless::String;
 use u8g2_fonts::types::{FontColor, HorizontalAlignment, VerticalPosition};
 
-use sporo_app::{action::Action, word_entry::WordEntry};
-use sporo_core::bip39_wordlist::{LetterSet, ALPHABET, ALPHABET_TEXT, MAX_WORD_LEN};
+use sporos_app::{action::Action, word_entry::WordEntry};
+use sporos_core::bip39_wordlist::{LetterSet, ALPHABET, ALPHABET_TEXT, MAX_WORD_LEN};
 
 use crate::{
     best_fit_font,

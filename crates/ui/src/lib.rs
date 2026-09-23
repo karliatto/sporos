@@ -1,11 +1,11 @@
 //! What the user sees and presses: the screens, the look they share, and the
 //! keymap that turns printed keys into actions.
 //!
-//! [`render`] draws whatever `sporo-app` says is showing; the screens behind it
+//! [`render`] draws whatever `sporos-app` says is showing; the screens behind it
 //! hold no state and decide nothing. [`keymap`] is the one place a key character
 //! means something, and every legend on the panel is composed from it.
 //!
-//! Kept apart from the firmware for the same reason [`sporo_core`] is: a screen
+//! Kept apart from the firmware for the same reason [`sporos_core`] is: a screen
 //! is generic over its [`DrawTarget`](embedded_graphics::draw_target::DrawTarget)
 //! and reads its geometry from `bounding_box`, so nothing here needs a chip and
 //! all of it can be drawn into a buffer on the host. Whether a line fits on the
@@ -30,7 +30,7 @@ mod word;
 mod wordlist;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*, primitives::Rectangle};
-use sporo_app::view::View;
+use sporos_app::view::View;
 use u8g2_fonts::{fonts, types::VerticalPosition, Content, FontRenderer};
 
 /// Draws `view` over the whole panel.
@@ -137,8 +137,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use sporo_app::{action::Action, app::App, menu::MenuItem};
-    use sporo_core::bip39::SeedLength;
+    use sporos_app::{action::Action, app::App, menu::MenuItem};
+    use sporos_core::bip39::SeedLength;
 
     use super::*;
     use crate::legend::{self, Hint};

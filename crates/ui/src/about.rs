@@ -1,6 +1,6 @@
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use heapless::String;
-use sporo_app::action::Action;
+use sporos_app::action::Action;
 use u8g2_fonts::{
     types::{FontColor, HorizontalAlignment, VerticalPosition},
     FontRenderer,
@@ -13,7 +13,7 @@ use crate::{
     WARNING_COLOR,
 };
 
-const LOGO_TEXT: &str = "SPORO";
+const LOGO_TEXT: &str = "SPOROS";
 /// The legend under the about text.
 pub(crate) const HINTS: [Hint; 1] = [Hint::new(&[Action::Back], "back")];
 

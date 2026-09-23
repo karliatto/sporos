@@ -5,8 +5,8 @@ use embedded_graphics::{
 };
 use u8g2_fonts::types::{FontColor, HorizontalAlignment, VerticalPosition};
 
-use sporo_app::action::Action;
-use sporo_core::bip39::SeedLength;
+use sporos_app::action::Action;
+use sporos_core::bip39::SeedLength;
 
 use crate::{
     best_fit_font,

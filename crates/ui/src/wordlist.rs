@@ -1,11 +1,11 @@
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use u8g2_fonts::types::{FontColor, HorizontalAlignment, VerticalPosition};
 
-use sporo_app::{
+use sporos_app::{
     action::Action,
     view::{self, PHRASE_PAGE_SIZE},
 };
-use sporo_core::bip39::{Mnemonic, MAX_WORD_COUNT_TOTAL};
+use sporos_core::bip39::{Mnemonic, MAX_WORD_COUNT_TOTAL};
 
 use crate::{
     best_fit_font,
@@ -159,7 +159,7 @@ mod tests {
 
     /// Rendered width of the widest word the list can put in the grid.
     fn longest_word() -> i32 {
-        sporo_core::bip39_wordlist::words()
+        sporos_core::bip39_wordlist::words()
             .map(advance)
             .max()
             .expect("the wordlist is not empty")

@@ -3,7 +3,7 @@
 //! State only: which entry the cursor is on, and what an action does to it.
 //! What each entry is *called* on the panel is the screen's business.
 
-use sporo_core::bip39::SeedLength;
+use sporos_core::bip39::SeedLength;
 
 use crate::action::Action;
 

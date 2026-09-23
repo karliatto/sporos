@@ -3,7 +3,7 @@ use esp_hal::{
     gpio::{AnyPin, Flex, Input, InputConfig, OutputConfig, Pull},
     time::{Duration, Instant},
 };
-use sporo_ui::keymap::LAYOUT;
+use sporos_ui::keymap::LAYOUT;
 
 pub const ROWS: usize = LAYOUT.len();
 pub const COLS: usize = LAYOUT[0].len();

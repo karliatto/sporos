@@ -25,8 +25,8 @@ use mipidsi::{
     Builder,
 };
 
-use sporo_app::app::App;
-use sporo_ui::{keymap, render, BACKGROUND_COLOR};
+use sporos_app::app::App;
+use sporos_ui::{keymap, render, BACKGROUND_COLOR};
 
 use crate::keypad::Keypad;
 
@@ -51,7 +51,7 @@ fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
     let mut delay = Delay::new();
 
-    println!("Sporo starting");
+    println!("Sporos starting");
 
     // Keep the backlight off until the panel is initialised, so the user doesn't
     // see the ST7789's power-on garbage. Active high on this board.

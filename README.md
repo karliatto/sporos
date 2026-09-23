@@ -1,6 +1,6 @@
-# Sporo
+# Sporos
 
-Bare-metal (`no_std`) Rust for Sporo firmware runs on: an ESP32 driving an ST7789 TFT.
+A hardware device for Bitcoin tools.
 
 ## Prerequisites
 

@@ -1,5 +1,5 @@
 [package]
-name = "sporo-ui"
+name = "sporos-ui"
 version = "0.1.0"
 edition = "2021"
 description = "What the user sees and presses: screens and keymap — no chip dependencies"
@@ -7,10 +7,10 @@ publish = false
 
 [dependencies]
 # What the screens display: the alphabet they draw, flips, the mnemonic.
-sporo-core = { path = "../core" }
+sporos-core = { path = "../core" }
 
 # The `View` the screens draw, and the `Action`s the keymap produces.
-sporo-app = { path = "../app" }
+sporos-app = { path = "../app" }
 
 # The drawing surface. Screens are generic over `DrawTarget`, which is what lets
 # them render to a real panel and to a test buffer alike.

@@ -5,7 +5,7 @@
 //! rebinding here changes what the keys do and what the screens say they do in
 //! the same edit — there is no second copy of the binding to fall out of step.
 
-use sporo_app::action::Action;
+use sporos_app::action::Action;
 
 /// The characters printed on the keypad, row-major from the top left — the order
 /// the firmware's matrix scan indexes them in.
