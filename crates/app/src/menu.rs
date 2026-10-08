@@ -19,6 +19,9 @@ pub enum MenuItem {
     /// The length is picked inside the workflow rather than here: the panel has
     /// no room for a fifth entry.
     XorPhrases,
+    /// Store a phrase on the SD card, or read back the one there. One entry
+    /// for both, for the same lack of room the XOR tool's length has.
+    SdCard,
     /// Firmware version and the shape of the phrase it builds.
     About,
 }
@@ -30,10 +33,11 @@ impl MenuItem {
     /// is pinned to the bottom, so they grow towards each other. `the_entries
     /// _stay_clear_of_the_hint_line` in the menu screen is what says when there
     /// is no more room.
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::GenerateMnemonic(SeedLength::Words12),
         Self::GenerateMnemonic(SeedLength::Words24),
         Self::XorPhrases,
+        Self::SdCard,
         Self::About,
     ];
 }

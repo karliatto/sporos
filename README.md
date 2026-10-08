@@ -165,6 +165,10 @@ controller (ILI9163).
 | Button          | 0              | active low; also a boot strapping pin    |
 | Keypad rows     | 21, 27, 26, 22 | pull-up inputs; a pressed key reads low  |
 | Keypad columns  | 33, 32, 25     | driven low one at a time, else high-Z    |
+| SD SCK          | 17             | TF card slot, on SPI3                    |
+| SD MOSI         | 15             | strapping pin                            |
+| SD MISO         | 2              | strapping pin                            |
+| SD CS           | 13             | idle high                                |
 
 
 |                   | col 33 | col 32 | col 25 |

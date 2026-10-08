@@ -13,6 +13,8 @@ pub mod action;
 pub mod app;
 mod generate;
 pub mod menu;
+pub mod sd;
+pub mod seed_file;
 pub mod view;
 pub mod word_entry;
 mod workflow;
