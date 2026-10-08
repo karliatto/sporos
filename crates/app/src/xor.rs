@@ -81,7 +81,7 @@ const LABELS: [&str; 2] = ["A", "B"];
 /// Shown when a phrase is complete but its final word does not match the rest.
 /// It names the phrase rather than a word, because any one of them could be the
 /// one mistyped.
-const INVALID_TEXT: &str = "phrase does not check out";
+pub(crate) const INVALID_TEXT: &str = "phrase does not check out";
 
 impl Xor {
     pub(crate) fn new() -> Self {
@@ -302,6 +302,7 @@ impl Xor {
             Step::Phrase { mnemonic, page } => View::Phrase {
                 mnemonic,
                 page: *page,
+                editable: true,
             },
         }
     }
