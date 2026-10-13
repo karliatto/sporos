@@ -36,15 +36,36 @@ pub(crate) const PAGED_HINTS: [[Hint; 3]; 2] = [
     ],
 ];
 
+/// The legends for a phrase read off the SD card, which `Back` leaves rather
+/// than reopens for editing. Otherwise as [`HINTS`] and [`PAGED_HINTS`].
+pub(crate) const READ_HINTS: [Hint; 2] = [
+    Hint::note("seed on card"),
+    Hint::new(&[Action::Back], "back"),
+];
+pub(crate) const PAGED_READ_HINTS: [[Hint; 3]; 2] = [
+    [
+        Hint::note("1/2"),
+        Hint::new(&[Action::Left, Action::Right], "page"),
+        Hint::new(&[Action::Back], "back"),
+    ],
+    [
+        Hint::note("2/2"),
+        Hint::new(&[Action::Left, Action::Right], "page"),
+        Hint::new(&[Action::Back], "back"),
+    ],
+];
+
 // A phrase long enough for a third page would index past `PAGED_HINTS`.
 const _: () = assert!(MAX_WORD_COUNT_TOTAL.div_ceil(PHRASE_PAGE_SIZE) <= PAGED_HINTS.len());
+const _: () = assert!(PAGED_READ_HINTS.len() == PAGED_HINTS.len());
 
 /// The legend for `page` of `mnemonic`.
-pub(crate) fn hints(mnemonic: &Mnemonic, page: usize) -> &'static [Hint] {
-    if view::phrase_pages(mnemonic) > 1 {
-        &PAGED_HINTS[page]
-    } else {
-        &HINTS
+pub(crate) fn hints(mnemonic: &Mnemonic, page: usize, editable: bool) -> &'static [Hint] {
+    match (view::phrase_pages(mnemonic) > 1, editable) {
+        (true, true) => &PAGED_HINTS[page],
+        (true, false) => &PAGED_READ_HINTS[page],
+        (false, true) => &HINTS,
+        (false, false) => &READ_HINTS,
     }
 }
 
@@ -64,8 +85,12 @@ const _: () = assert!(WORDLIST_ROWS * WORDLIST_COLUMNS == PHRASE_PAGE_SIZE);
 /// One page of the phrase: [`PHRASE_PAGE_SIZE`] words in a numbered grid, the
 /// legend along the bottom. Numbered across pages, so the second page of a
 /// 24-word phrase runs 13-24.
-pub(crate) fn show_wordlist_screen<D>(display: &mut D, mnemonic: &Mnemonic, page: usize)
-where
+pub(crate) fn show_wordlist_screen<D>(
+    display: &mut D,
+    mnemonic: &Mnemonic,
+    page: usize,
+    editable: bool,
+) where
     D: DrawTarget<Color = Rgb565>,
     D::Error: core::fmt::Debug,
 {
@@ -124,7 +149,7 @@ where
             .expect("word render failed");
     }
 
-    let legend = legend::compose(hints(mnemonic, page));
+    let legend = legend::compose(hints(mnemonic, page, editable));
     best_fit_font(&BODY_FONTS, legend.as_str(), usable_width)
         .render_aligned(
             legend.as_str(),

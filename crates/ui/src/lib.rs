@@ -20,12 +20,15 @@
 #![cfg_attr(not(test), no_std)]
 
 mod about;
+mod choice;
 mod coin;
 mod home;
 pub mod keymap;
 mod legend;
 mod length;
 mod menu;
+mod message;
+mod sd;
 mod word;
 mod wordlist;
 
@@ -53,7 +56,17 @@ where
             notice,
         } => word::show_word_screen(display, entry, label, notice),
         View::Coin(flips) => coin::show_coin_screen(display, flips),
-        View::Phrase { mnemonic, page } => wordlist::show_wordlist_screen(display, mnemonic, page),
+        View::Phrase {
+            mnemonic,
+            page,
+            editable,
+        } => wordlist::show_wordlist_screen(display, mnemonic, page, editable),
+        View::SdPick { selected } => sd::show_sd_screen(display, selected),
+        View::Message {
+            text,
+            warning,
+            busy,
+        } => message::show_message_screen(display, text, warning, busy),
     }
 }
 
@@ -150,10 +163,16 @@ mod tests {
             View::Home => &[],
             View::Menu { .. } => &menu::HINTS,
             View::About { .. } => &about::HINTS,
-            View::SeedLengthPick { .. } => &length::HINTS,
+            View::SeedLengthPick { .. } => &choice::HINTS,
             View::Words { notice, .. } => word::hints(notice),
             View::Coin(flips) => coin::hints(flips),
-            View::Phrase { mnemonic, page } => wordlist::hints(mnemonic, page),
+            View::Phrase {
+                mnemonic,
+                page,
+                editable,
+            } => wordlist::hints(mnemonic, page, editable),
+            View::SdPick { .. } => &choice::HINTS,
+            View::Message { busy, .. } => message::hints(busy),
         }
     }
 
@@ -229,6 +248,53 @@ mod tests {
             (xor_words, "xor words"),
             (refused, "xor words, phrase refused"),
         ];
+
+        // The SD tools: the picker, the store tool's word screen, the outcome
+        // of a write, and a phrase read off the card at both lengths. The card
+        // itself is played by hand, the way the firmware answers.
+        let mut sd_pick = samples[0].0.clone();
+        while !matches!(
+            sd_pick.view(),
+            View::Menu { selected } if selected == MenuItem::SdCard
+        ) {
+            press(&mut sd_pick, Action::Down);
+        }
+        press(&mut sd_pick, Action::Select);
+
+        let mut sd_words = sd_pick.clone();
+        press(&mut sd_words, Action::Select);
+        press(&mut sd_words, Action::Select);
+        spell(&mut sd_words, "AB");
+
+        let mut sd_stored = sd_pick.clone();
+        press(&mut sd_stored, Action::Select);
+        press(&mut sd_stored, Action::Select);
+        for word in ["ABANDON"; 11].into_iter().chain(["ABOUT"]) {
+            spell(&mut sd_stored, word);
+            press(&mut sd_stored, Action::Confirm);
+        }
+        sd_stored.sd_stored(Ok(()));
+
+        let mut sd_read = sd_pick.clone();
+        press(&mut sd_read, Action::Down);
+        press(&mut sd_read, Action::Select);
+
+        let mut sd_read_24 = sd_read.clone();
+        sd_read.sd_loaded(Ok(b"abandon abandon abandon abandon abandon abandon \
+                               abandon abandon abandon abandon abandon about"));
+        sd_read_24.sd_loaded(Ok(
+            std::format!("{} art", ["abandon"; 23].join(" ")).as_bytes()
+        ));
+
+        let mut sd_read_turned = sd_read_24.clone();
+        press(&mut sd_read_turned, Action::Right);
+
+        samples.push((sd_pick, "sd picker"));
+        samples.push((sd_words, "sd store words"));
+        samples.push((sd_stored, "sd stored"));
+        samples.push((sd_read, "sd read"));
+        samples.push((sd_read_24, "sd read, 24 words"));
+        samples.push((sd_read_turned, "sd read, after a page turn"));
 
         for length in SeedLength::ALL {
             let mut coin = samples[0].0.clone();
@@ -323,8 +389,21 @@ mod tests {
             "2/2  4/6 page  * to edit"
         );
         assert_eq!(legend::compose(&crate::about::HINTS), "* back");
+        assert_eq!(legend::compose(&crate::message::HINTS), "* back");
         assert_eq!(
-            legend::compose(&crate::length::HINTS),
+            legend::compose(&crate::wordlist::READ_HINTS),
+            "seed on card  * back"
+        );
+        assert_eq!(
+            legend::compose(&crate::wordlist::PAGED_READ_HINTS[0]),
+            "1/2  4/6 page  * back"
+        );
+        assert_eq!(
+            legend::compose(&crate::wordlist::PAGED_READ_HINTS[1]),
+            "2/2  4/6 page  * back"
+        );
+        assert_eq!(
+            legend::compose(&crate::choice::HINTS),
             "2/8 move  5 select  * back"
         );
         assert_eq!(

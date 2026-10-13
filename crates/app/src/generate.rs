@@ -141,6 +141,7 @@ impl Generate {
             Step::Phrase { mnemonic, page } => View::Phrase {
                 mnemonic,
                 page: *page,
+                editable: true,
             },
         }
     }

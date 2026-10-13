@@ -5,7 +5,7 @@ use sporos_core::{
     flips::Flips,
 };
 
-use crate::{menu::MenuItem, word_entry::WordEntry};
+use crate::{menu::MenuItem, sd::SdTool, word_entry::WordEntry};
 
 /// Words of a finished phrase shown at once. A 12-word phrase is one page; a
 /// 24-word one is two, turned with `Left` and `Right`.
@@ -52,5 +52,20 @@ pub enum View<'a> {
     Phrase {
         mnemonic: &'a Mnemonic,
         page: usize,
+        /// Whether `Back` reopens the phrase for editing, as it does on one the
+        /// device built, or just leaves, as it does on one read off the card.
+        editable: bool,
+    },
+    /// Choosing between the SD card tools.
+    SdPick {
+        selected: SdTool,
+    },
+    /// One line saying what happened, or what is happening.
+    Message {
+        text: &'static str,
+        /// Shown as a warning: something the user asked for did not happen.
+        warning: bool,
+        /// Waiting on the card, when no key does anything.
+        busy: bool,
     },
 }

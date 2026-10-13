@@ -41,6 +41,10 @@ mipidsi = "0.10.0"
 embedded-graphics = "0.8.2"
 embedded-hal-bus = "0.3.0"
 
+# FAT16/32 over an SD card in SPI mode. No allocator needed. Default features
+# only add the `log` facade, which nothing here installs a logger for.
+embedded-sdmmc = { version = "0.10.0", default-features = false }
+
 critical-section = "1.2.0"
 
 # The default debug profile is too slow and too large for a microcontroller,

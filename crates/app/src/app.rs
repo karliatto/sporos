@@ -2,6 +2,7 @@ use crate::{
     action::Action,
     generate::Generate,
     menu::{Menu, MenuEvent, MenuItem},
+    sd::{Sd, SdError, SdRequest},
     view::View,
     workflow::Outcome,
     xor::Xor,
@@ -33,6 +34,7 @@ enum Screen {
     About,
     Generate(Generate),
     Xor(Xor),
+    Sd(Sd),
 }
 
 impl App {
@@ -79,6 +81,11 @@ impl App {
 
                     true
                 }
+                MenuEvent::Chose(MenuItem::SdCard) => {
+                    self.screen = Screen::Sd(Sd::new());
+
+                    true
+                }
                 MenuEvent::Chose(MenuItem::About) => {
                     self.screen = Screen::About;
 
@@ -116,6 +123,40 @@ impl App {
                     true
                 }
             },
+            Screen::Sd(sd) => match sd.press(action) {
+                Outcome::Unchanged => false,
+                Outcome::Redraw => true,
+                Outcome::Exit => {
+                    self.screen = Screen::Menu;
+
+                    true
+                }
+            },
+        }
+    }
+
+    /// What the open screen is waiting on the SD card for, if anything. The
+    /// firmware checks after every press, does the I/O, and answers with
+    /// [`Self::sd_stored`] or [`Self::sd_loaded`].
+    pub fn sd_request(&self) -> Option<SdRequest<'_>> {
+        match &self.screen {
+            Screen::Sd(sd) => sd.request(),
+            _ => None,
+        }
+    }
+
+    /// Answers a [`SdRequest::Store`]. The caller always redraws.
+    pub fn sd_stored(&mut self, result: Result<(), SdError>) {
+        if let Screen::Sd(sd) = &mut self.screen {
+            sd.stored(result);
+        }
+    }
+
+    /// Answers a [`SdRequest::Load`] with the file's bytes. The caller always
+    /// redraws.
+    pub fn sd_loaded(&mut self, result: Result<&[u8], SdError>) {
+        if let Screen::Sd(sd) = &mut self.screen {
+            sd.loaded(result);
         }
     }
 
@@ -138,6 +179,7 @@ impl App {
             },
             Screen::Generate(generate) => generate.view(),
             Screen::Xor(xor) => xor.view(),
+            Screen::Sd(sd) => sd.view(),
         }
     }
 }
@@ -168,6 +210,8 @@ mod tests {
             View::Words { .. } => "words",
             View::Coin(_) => "coin",
             View::Phrase { .. } => "phrase",
+            View::SdPick { .. } => "sd pick",
+            View::Message { .. } => "message",
         }
     }
 
@@ -893,5 +937,193 @@ mod tests {
         assert_eq!(screen_name(&app), "words");
         // Phrase B, reopened at its last word rather than cleared.
         assert_eq!(words(&app).accepted().len(), Words12.entered_words());
+    }
+
+    const ZERO_12: &str = "abandon abandon abandon abandon abandon abandon \
+                           abandon abandon abandon abandon abandon about";
+
+    /// From a new app, through the menu, onto the SD tool picker.
+    fn open_sd() -> App {
+        let mut app = App::new(VERSION);
+        press(&mut app, Action::Select);
+        while selected(&app) != MenuItem::SdCard {
+            press(&mut app, Action::Down);
+        }
+        press(&mut app, Action::Select);
+        assert_eq!(screen_name(&app), "sd pick");
+
+        app
+    }
+
+    fn message(app: &App) -> (&'static str, bool) {
+        match app.view() {
+            View::Message { text, warning, .. } => (text, warning),
+            _ => panic!("expected a message, on {}", screen_name(app)),
+        }
+    }
+
+    /// The store tool at `length`, every word typed but the last.
+    fn storing_all_but_the_last(length: SeedLength) -> App {
+        let mut app = open_sd();
+        press(&mut app, Action::Select);
+        assert_eq!(screen_name(&app), "length");
+        if length == Words24 {
+            press(&mut app, Action::Down);
+        }
+        press(&mut app, Action::Select);
+        assert_eq!(words(&app).word_count(), length.total_words());
+
+        for _ in 0..length.total_words() - 1 {
+            spell_word(&mut app, "abandon");
+        }
+
+        app
+    }
+
+    #[test]
+    fn a_valid_phrase_is_handed_to_the_card_once_typed() {
+        let mut app = storing_all_but_the_last(Words12);
+        assert!(app.sd_request().is_none(), "asked for the card too early");
+
+        spell_word(&mut app, "about");
+
+        let Some(SdRequest::Store(mnemonic)) = app.sd_request() else {
+            panic!("expected a store request");
+        };
+        assert_eq!(mnemonic.words().last(), Some(&"about"));
+        assert_eq!(screen_name(&app), "message");
+
+        app.sd_stored(Ok(()));
+        assert!(app.sd_request().is_none());
+        assert_eq!(message(&app), ("Seed stored on SD", false));
+
+        // `Back` from the result lands on the picker, still on Store.
+        assert!(press(&mut app, Action::Back));
+        assert!(matches!(
+            app.view(),
+            View::SdPick {
+                selected: crate::sd::SdTool::Store
+            }
+        ));
+    }
+
+    #[test]
+    fn a_phrase_that_does_not_check_out_is_not_stored() {
+        let mut app = storing_all_but_the_last(Words12);
+        spell_word(&mut app, "abandon");
+
+        assert!(app.sd_request().is_none());
+        assert!(matches!(
+            app.view(),
+            View::Words {
+                notice: Some(_),
+                ..
+            }
+        ));
+
+        // Only `Back` does anything, and it reopens the last word.
+        assert!(!press(&mut app, Action::Confirm));
+        assert!(press(&mut app, Action::Back));
+        assert_eq!(words(&app).accepted().len(), Words12.total_words() - 1);
+    }
+
+    #[test]
+    fn a_failed_write_says_so() {
+        for (error, text) in [
+            (SdError::NoCard, "No SD card"),
+            (SdError::Failed, "SD write failed"),
+        ] {
+            let mut app = storing_all_but_the_last(Words12);
+            spell_word(&mut app, "about");
+            app.sd_stored(Err(error));
+
+            assert_eq!(message(&app), (text, true));
+        }
+    }
+
+    #[test]
+    fn reading_shows_the_phrase_on_the_card() {
+        let mut app = open_sd();
+        press(&mut app, Action::Down);
+        press(&mut app, Action::Select);
+
+        assert!(matches!(app.sd_request(), Some(SdRequest::Load)));
+
+        app.sd_loaded(Ok(ZERO_12.as_bytes()));
+        assert!(app.sd_request().is_none());
+        assert_eq!(phrase(&app).words().last(), Some(&"about"));
+        assert!(matches!(
+            app.view(),
+            View::Phrase {
+                editable: false,
+                ..
+            }
+        ));
+
+        // `Back` leaves rather than editing, onto the picker on Read.
+        assert!(press(&mut app, Action::Back));
+        assert!(matches!(
+            app.view(),
+            View::SdPick {
+                selected: crate::sd::SdTool::Read
+            }
+        ));
+    }
+
+    #[test]
+    fn a_24_word_phrase_off_the_card_turns_pages() {
+        let zero_24 = [["abandon"; 23].join(" ").as_str(), "art"].join(" ");
+
+        let mut app = open_sd();
+        press(&mut app, Action::Down);
+        press(&mut app, Action::Select);
+        app.sd_loaded(Ok(zero_24.as_bytes()));
+
+        assert_eq!(page(&app), 0);
+        assert!(press(&mut app, Action::Right));
+        assert_eq!(page(&app), 1);
+    }
+
+    #[test]
+    fn a_failed_read_says_why() {
+        for (result, text) in [
+            (Err(SdError::NoCard), "No SD card"),
+            (Err(SdError::NotFound), "No seed on card"),
+            (Err(SdError::Failed), "SD read failed"),
+            (Ok(&b"not a seed"[..]), "Invalid seed on card"),
+        ] {
+            let mut app = open_sd();
+            press(&mut app, Action::Down);
+            press(&mut app, Action::Select);
+            app.sd_loaded(result);
+
+            assert_eq!(message(&app), (text, true));
+        }
+    }
+
+    /// An answer nobody asked for must not move the workflow.
+    #[test]
+    fn card_answers_are_ignored_unless_one_is_pending() {
+        let mut app = open_sd();
+        app.sd_loaded(Ok(ZERO_12.as_bytes()));
+        app.sd_stored(Ok(()));
+        assert_eq!(screen_name(&app), "sd pick");
+
+        let mut app = App::new(VERSION);
+        app.sd_loaded(Ok(ZERO_12.as_bytes()));
+        assert_eq!(screen_name(&app), "home");
+    }
+
+    #[test]
+    fn back_walks_out_of_the_sd_tools_to_the_menu() {
+        let mut app = open_sd();
+        press(&mut app, Action::Select);
+        press(&mut app, Action::Select);
+        spell(&mut app, "ab");
+
+        while screen_name(&app) != "menu" {
+            assert!(press(&mut app, Action::Back));
+        }
+        assert_eq!(selected(&app), MenuItem::SdCard);
     }
 }

@@ -2,6 +2,7 @@
 #![no_main]
 
 mod keypad;
+mod sdcard;
 
 use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::ExclusiveDevice;
@@ -25,10 +26,15 @@ use mipidsi::{
     Builder,
 };
 
-use sporos_app::app::App;
+use sporos_app::{
+    app::App,
+    sd::SdRequest,
+    seed_file::{self, SEED_FILE, SEED_FILE_CAPACITY},
+};
 use sporos_ui::{keymap, render, BACKGROUND_COLOR};
 
 use crate::keypad::Keypad;
+use crate::sdcard::SdStorage;
 
 // Required by the ESP-IDF second-stage bootloader.
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -94,6 +100,17 @@ fn main() -> ! {
     let size = display.bounding_box().size;
     println!("display up: {}x{}", size.width, size.height);
 
+    // TF card slot on its own bus (SPI3), so the card's slow start-up clock
+    // never touches the panel's. Not touched until an SD tool asks for it, so
+    // the device runs as before without a card.
+    let mut sd = SdStorage::new(
+        peripherals.SPI3,
+        peripherals.GPIO17, // SCK
+        peripherals.GPIO15, // MOSI
+        peripherals.GPIO2,  // MISO
+        peripherals.GPIO13, // CS
+    );
+
     // Upper button on the T-Display, active low. Note GPIO0 is also a strapping
     // pin: holding it down during reset puts the chip into download mode.
     let button = Input::new(
@@ -150,6 +167,37 @@ fn main() -> ! {
             render(&mut display, &app.view());
         }
 
+        // Drawn first, so the wait on the card shows as such; then the answer.
+        if handle_sd(&mut app, &mut sd) {
+            render(&mut display, &app.view());
+        }
+
         delay.delay_millis(2);
+    }
+}
+
+/// Does whatever the open screen is waiting on the card for, and hands back
+/// the outcome. Returns whether there was anything to do.
+///
+/// The phrase passes through here as bytes and is never logged.
+fn handle_sd(app: &mut App, sd: &mut SdStorage) -> bool {
+    match app.sd_request() {
+        None => false,
+        Some(SdRequest::Store(mnemonic)) => {
+            let text = seed_file::encode(mnemonic);
+            let result = sd.store(SEED_FILE, text.as_bytes());
+            app.sd_stored(result);
+
+            true
+        }
+        Some(SdRequest::Load) => {
+            let mut buf = [0u8; SEED_FILE_CAPACITY];
+            match sd.load(SEED_FILE, &mut buf) {
+                Ok(len) => app.sd_loaded(Ok(&buf[..len])),
+                Err(err) => app.sd_loaded(Err(err)),
+            }
+
+            true
+        }
     }
 }

@@ -23,13 +23,14 @@ pub(crate) const HINTS: [Hint; 3] = [
 ];
 
 /// Space between the middle of one entry's box and the middle of the next.
-/// Four pixels more than [`BOX_HEIGHT`], so the boxes read as separate rather
-/// than as one block with lines through it.
-const ROW_HEIGHT: i32 = 24;
+/// Three pixels more than [`BOX_HEIGHT`], so the boxes read as separate rather
+/// than as one block with lines through it. Tighter than the pickers' lists:
+/// five entries do not fit at their pitch.
+const ROW_HEIGHT: i32 = 21;
 
 /// Height of the box drawn around an entry: the body face is around thirteen
 /// pixels tall, and the rest is padding.
-const BOX_HEIGHT: u32 = 20;
+const BOX_HEIGHT: u32 = 18;
 
 /// Corner rounding, and the gap between a box's left edge and its label.
 const BOX_RADIUS: u32 = 3;
@@ -47,6 +48,7 @@ pub(crate) const fn label(item: MenuItem) -> &'static str {
         MenuItem::GenerateMnemonic(SeedLength::Words12) => "Generate 12th word",
         MenuItem::GenerateMnemonic(SeedLength::Words24) => "Generate 24th word",
         MenuItem::XorPhrases => "XOR two phrases",
+        MenuItem::SdCard => "SD card",
         MenuItem::About => "About",
     }
 }

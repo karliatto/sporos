@@ -4,7 +4,7 @@ use core::convert::Infallible;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 
-use sporos_app::{action::Action, menu::MenuItem, view::View, word_entry::WordEntry};
+use sporos_app::{action::Action, menu::MenuItem, sd::SdTool, view::View, word_entry::WordEntry};
 use sporos_core::{
     bip39::{self, Mnemonic, SeedLength, Word},
     bip39_wordlist::{self, ALPHABET},
@@ -242,16 +242,20 @@ fn the_wordlist_screen_fits_the_panel() {
         let mnemonic = longest_phrase(length);
 
         for page in 0..sporos_app::view::phrase_pages(&mnemonic) {
-            let mut display = Recorder::new(PANEL);
-            render(
-                &mut display,
-                &View::Phrase {
-                    mnemonic: &mnemonic,
-                    page,
-                },
-            );
+            // Built and read off the card: the legends differ.
+            for editable in [true, false] {
+                let mut display = Recorder::new(PANEL);
+                render(
+                    &mut display,
+                    &View::Phrase {
+                        mnemonic: &mnemonic,
+                        page,
+                        editable,
+                    },
+                );
 
-            display.assert_within_panel("the wordlist screen");
+                display.assert_within_panel("the wordlist screen");
+            }
         }
     }
 }
@@ -328,6 +332,35 @@ fn the_about_screen_fits_the_panel() {
         render(&mut display, &View::About { version });
 
         display.assert_within_panel("the about screen");
+    }
+}
+
+#[test]
+fn the_sd_picker_fits_the_panel() {
+    for selected in SdTool::ALL {
+        let mut display = Recorder::new(PANEL);
+        render(&mut display, &View::SdPick { selected });
+
+        display.assert_within_panel("the sd picker");
+    }
+}
+
+/// Measured with the longest message the SD tools show, in both colours and
+/// with and without the legend.
+#[test]
+fn a_message_screen_fits_the_panel() {
+    for (warning, busy) in [(false, false), (true, false), (false, true)] {
+        let mut display = Recorder::new(PANEL);
+        render(
+            &mut display,
+            &View::Message {
+                text: "Invalid seed on card",
+                warning,
+                busy,
+            },
+        );
+
+        display.assert_within_panel("the message screen");
     }
 }
 
