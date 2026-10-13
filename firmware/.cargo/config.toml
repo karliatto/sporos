@@ -1,5 +1,8 @@
 [target.xtensa-esp32-none-elf]
-runner = "espflash flash --monitor --chip esp32"
+# The bootloader and partition table are the repo's, not espflash's built-in
+# ones, so a development flash writes exactly what `make image` ships. Paths
+# are relative to firmware/, where cargo runs.
+runner = "espflash flash --monitor --chip esp32 --bootloader boot/bootloader.bin --partition-table partitions.csv"
 
 [build]
 target = "xtensa-esp32-none-elf"

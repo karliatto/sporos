@@ -1,0 +1,11 @@
+# ESP-IDF partition table, flashed at 0x8000.
+#
+# The layout espflash used by default before this file existed, so adding it
+# changed nothing on the device. Owned here so that moving it is a reviewed
+# change: a secure-boot bootloader is larger than boot/bootloader.bin and will
+# not fit below 0x8000, which pushes this table and the app further out.
+#
+# Name,     Type, SubType, Offset,  Size,     Flags
+nvs,        data, nvs,     0x9000,  0x6000,
+phy_init,   data, phy,     0xf000,  0x1000,
+factory,    app,  factory, 0x10000, 0x3f0000,

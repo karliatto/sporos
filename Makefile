@@ -1,7 +1,7 @@
 ## Usage
 #
 #   $ make build       # compile the firmware
-#   $ make image       # compile, then write the flashable sporos-v<version>.bin
+#   $ make image       # compile, then write the release images to firmware/target/image/
 #   $ make flash       # compile, flash, then attach the serial monitor
 #   $ make monitor     # attach the serial monitor only
 #   $ make check       # type-check without producing a binary
@@ -34,9 +34,21 @@ ELF := $(FIRMWARE)/target/xtensa-esp32-none-elf/$(PROFILE)/sporos
 # [package] one, since the manifest has no other section that sets one.
 VERSION := $(shell sed -n 's/^version = "\(.*\)"/\1/p' $(FIRMWARE)/Cargo.toml | head -n 1)
 
-# The image espflash writes to the device, named for release. Under target/ so
-# git ignores it, next to the ELF it is made from.
-IMAGE := $(FIRMWARE)/target/sporos-v$(VERSION).bin
+# The bootloader and partition table every flash uses. Checked in rather than
+# left to espflash's built-in defaults, so they are pinned and can be replaced by
+# a signed bootloader for secure boot; see firmware/boot/README.md.
+BOOTLOADER := $(FIRMWARE)/boot/bootloader.bin
+PARTITIONS := $(FIRMWARE)/partitions.csv
+FLASH_LAYOUT := --bootloader $(BOOTLOADER) --partition-table $(PARTITIONS)
+
+# Release images, named for the version. Under target/ so git ignores them.
+#
+#   bootloader-v<version>.bin   at 0x1000
+#   partitions-v<version>.bin   at 0x8000
+#   sporos-v<version>.bin       at 0x10000, the app; the one that changes
+#   sporos-v<version>-merged.bin  all three in one, at 0x0, for a blank board
+IMAGE_DIR := $(FIRMWARE)/target/image
+IMAGE := $(IMAGE_DIR)/sporos-v$(VERSION).bin
 
 # Pins the build timestamp in the ESP-IDF app descriptor, which is part of the
 # flashed image. Without this the descriptor records wall-clock time and no two
@@ -64,8 +76,12 @@ build:
 	cd $(FIRMWARE) && cargo build --$(PROFILE)
 
 image: build
-	espflash save-image --chip esp32 $(ELF) $(IMAGE)
-	@echo "image: $(IMAGE)"
+	mkdir -p $(IMAGE_DIR)
+	cp $(BOOTLOADER) $(IMAGE_DIR)/bootloader-v$(VERSION).bin
+	espflash partition-table --to-binary $(PARTITIONS) -o $(IMAGE_DIR)/partitions-v$(VERSION).bin
+	espflash save-image --chip esp32 $(FLASH_LAYOUT) $(ELF) $(IMAGE)
+	espflash save-image --chip esp32 $(FLASH_LAYOUT) --merge --skip-padding $(ELF) $(IMAGE_DIR)/sporos-v$(VERSION)-merged.bin
+	@ls -l $(IMAGE_DIR)
 
 check:
 	cd $(FIRMWARE) && cargo check --$(PROFILE)
@@ -112,11 +128,11 @@ check-reproducible:
 	echo "==> build 1 of 2"; \
 	(cd $(FIRMWARE) && cargo clean) >/dev/null; \
 	$(MAKE) --no-print-directory build; \
-	espflash save-image --chip esp32 $(ELF) "$$d/a.bin" >/dev/null; \
+	espflash save-image --chip esp32 $(FLASH_LAYOUT) $(ELF) "$$d/a.bin" >/dev/null; \
 	echo "==> build 2 of 2"; \
 	(cd $(FIRMWARE) && cargo clean) >/dev/null; \
 	$(MAKE) --no-print-directory build; \
-	espflash save-image --chip esp32 $(ELF) "$$d/b.bin" >/dev/null; \
+	espflash save-image --chip esp32 $(FLASH_LAYOUT) $(ELF) "$$d/b.bin" >/dev/null; \
 	if cmp -s "$$d/a.bin" "$$d/b.bin"; then \
 		echo "reproducible: $$(sha256sum <"$$d/a.bin" | cut -d' ' -f1)"; \
 	else \
