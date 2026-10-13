@@ -114,6 +114,32 @@ cargo build --release
 cargo run --release   # flashes via the runner configured in .cargo/config.toml
 ```
 
+### Release images
+
+`make image` writes the flashable files to `firmware/target/image/`, named for
+the version in [firmware/Cargo.toml](firmware/Cargo.toml):
+
+| File                           | Flash offset | Notes                                 |
+| ------------------------------ | ------------ | ------------------------------------- |
+| `bootloader-v<version>.bin`    | `0x1000`     | from [firmware/boot/](firmware/boot/) |
+| `partitions-v<version>.bin`    | `0x8000`     | from [firmware/partitions.csv](firmware/partitions.csv) |
+| `sporos-v<version>.bin`        | `0x10000`    | the app; the only one a release changes |
+| `sporos-v<version>-merged.bin` | `0x0`        | all three in one, for a blank board   |
+
+The bootloader and partition table are checked in rather than taken from
+espflash's built-in defaults, and `make flash` uses the same files, so a
+development flash writes what a release ships. They are what will change to
+enable secure boot; see [firmware/boot/README.md](firmware/boot/README.md).
+
+To flash the separate files with `esptool`:
+
+```bash
+esptool.py --chip esp32 write_flash \
+  0x1000 bootloader-v<version>.bin \
+  0x8000 partitions-v<version>.bin \
+  0x10000 sporos-v<version>.bin
+```
+
 ## Reproducible builds
 
 Two people building the same commit **inside the Nix dev shell** get a
