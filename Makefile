@@ -1,6 +1,7 @@
 ## Usage
 #
 #   $ make build       # compile the firmware
+#   $ make image       # compile, then write the flashable sporos-v<version>.bin
 #   $ make flash       # compile, flash, then attach the serial monitor
 #   $ make monitor     # attach the serial monitor only
 #   $ make check       # type-check without producing a binary
@@ -29,6 +30,14 @@ FIRMWARE := firmware
 
 ELF := $(FIRMWARE)/target/xtensa-esp32-none-elf/$(PROFILE)/sporos
 
+# The firmware's own version, from the first `version =` in its manifest -- the
+# [package] one, since the manifest has no other section that sets one.
+VERSION := $(shell sed -n 's/^version = "\(.*\)"/\1/p' $(FIRMWARE)/Cargo.toml | head -n 1)
+
+# The image espflash writes to the device, named for release. Under target/ so
+# git ignores it, next to the ELF it is made from.
+IMAGE := $(FIRMWARE)/target/sporos-v$(VERSION).bin
+
 # Pins the build timestamp in the ESP-IDF app descriptor, which is part of the
 # flashed image. Without this the descriptor records wall-clock time and no two
 # builds ever match. Nix's stdenv already exports this exact value, so inside
@@ -41,6 +50,7 @@ ELF := $(FIRMWARE)/target/xtensa-esp32-none-elf/$(PROFILE)/sporos
 export SOURCE_DATE_EPOCH := 315532800
 
 .PHONY: build\
+image\
 check\
 clean\
 clippy\
@@ -52,6 +62,10 @@ check-reproducible
 
 build:
 	cd $(FIRMWARE) && cargo build --$(PROFILE)
+
+image: build
+	espflash save-image --chip esp32 $(ELF) $(IMAGE)
+	@echo "image: $(IMAGE)"
 
 check:
 	cd $(FIRMWARE) && cargo check --$(PROFILE)
